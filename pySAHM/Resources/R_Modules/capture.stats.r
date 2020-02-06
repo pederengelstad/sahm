@@ -108,30 +108,31 @@ capture.output(cat(" applied to",label, "split:\n",sep=" "),
                                   for(i in 2:length(a)) cmx<-cmx+a[[i]] #it's amazing I can't think of a better way to sum a list of tables
                                    print.table(cmx)
                                    },
-                           cat("\n\t AUC                          : ",mean(unlist(lapply(Stats.lst,function(lst){lst$auc.fit}))),
-                           if(label=="crossValidation"){paste(" (sd ",
-                              signif(sd(unlist(lapply(Stats.lst,function(lst){lst$auc.fit}))),digits=5),
-                              ")",sep="")},
+
+                           cat(
+                            "\n\t AUC                          : ",mean(unlist(lapply(Stats.lst,function(lst){lst$auc.fit}))),
+                           if(label=="crossValidation"){paste(" (sd ",signif(sd(unlist(lapply(Stats.lst,function(lst){lst$auc.fit}))),digits=5),")",sep="")},
+
+                           "\n\t AUC-pr                       : ",mean(unlist(lapply(Stats.lst,function(lst){lst$auc.pr}))),
+                           if(label=="crossValidation"){paste(" (sd ",signif(sd(unlist(lapply(Stats.lst,function(lst){lst$auc.pr}))),digits=5),")",sep="")},
+
                            "\n\t Percent Correctly Classified : ",mean(unlist(lapply(Stats.lst,function(lst){lst$Pcc}))),
-                           if(label=="crossValidation"){paste(" (sd ",
-                              signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Pcc}))),digits=5),
-                              ")",sep="")},
+                           if(label=="crossValidation"){paste(" (sd ",signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Pcc}))),digits=5),")",sep="")},
+
                            "\n\t Sensitivity                  : ",mean(unlist(lapply(Stats.lst,function(lst){lst$Sens}))),
-                           if(label=="crossValidation"){paste(" (sd ",
-                              signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Sens}))),digits=5),
-                              ")",sep="")},
+                           if(label=="crossValidation"){paste(" (sd ",signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Sens}))),digits=5),")",sep="")},
+
                            "\n\t Specificity                  : ",mean(unlist(lapply(Stats.lst,function(lst){lst$Specf}))),
-                           if(label=="crossValidation"){paste(" (sd ",
-                              signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Specf}))),digits=5),
-                              ")",sep="")},
+                           if(label=="crossValidation"){paste(" (sd ",signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Specf}))),digits=5),")",sep="")},
+
                            "\n\t Kappa                        : ",mean(unlist(lapply(Stats.lst,function(lst){lst$Kappa}))),
-                           if(label=="crossValidation"){paste(" (sd ",
-                              signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Kappa}))),digits=5),
-                              ")",sep="")},
+                           if(label=="crossValidation"){paste(" (sd ",signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Kappa}))),digits=5),")",sep="")},
+
                            "\n\t True Skill Statistic         : ",mean(unlist(lapply(Stats.lst,function(lst){lst$Tss}))),
-                           if(label=="crossValidation"){paste(" (sd ",
-                              signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Tss}))),digits=5),
-                              ")",sep="")},"\n"),
+                           if(label=="crossValidation"){paste(" (sd ",signif(sd(unlist(lapply(Stats.lst,function(lst){lst$Tss}))),digits=5),")",sep="")},
+
+                           "\n"),
+
                            file=paste(out$dat$bname,"_output.txt",sep=""),append=TRUE)
                        }
 
@@ -159,6 +160,4 @@ capture.output(cat(" applied to",label, "split:\n",sep=" "),
 
                               "\n\n",
                        file=paste(out$dat$bname,"_output.txt",sep=""),append=TRUE))
-#if(label=="crossValidation"){cat("\n\n   Pooled Calibration Statistics\n",print.table(cbind(names(out$cv$pooled.calib),out$cv$pooled.calib)))}
-#something I should include later
 }

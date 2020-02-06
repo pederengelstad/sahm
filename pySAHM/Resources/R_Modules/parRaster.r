@@ -1,23 +1,49 @@
-parRaster<-function(start.tile,dims,tr,MESS,MOD,nvars,fullnames,nvars.final,vnames,NAval,
-factor.levels,model,Model,pred.fct,make.binary.tif,make.p.tif,RasterInfo,outfile.p,outfile.bin,
-thresh,nToDo,ScriptPath,vnames.final.mod,train.dat,residSmooth,template,maDir) {
-    #loading code and libraries that are needed
-    setwd(file.path(ScriptPath))
-    source("pred.fct.r")
-    source("chk.libs.r")
-    source("CalcMESS.r")
-    
-    if(!is.null(residSmooth)) source("Pred.Surface.r")
-    source(paste(toupper(Model),".helper.fcts.r",sep=""))
-   
-    chk.libs(Model)
+parRaster = function(start.tile,
+                     dims,
+                     tr,
+                     MESS,
+                     MOD,
+                     nvars,
+                     fullnames,
+                     nvars.final,
+                     vnames,
+                     NAval,
+                     factor.levels,
+                     model,
+                     Model,
+                     pred.fct,
+                     make.binary.tif,
+                     make.p.tif,
+                     RasterInfo,
+                     outfile.p,
+                     outfile.bin,
+                     thresh,
+                     nToDo,
+                     ScriptPath,
+                     vnames.final.mod,
+                     train.dat,
+                     residSmooth,
+                     template,
+                     maDir)
+{
+  
+  # Loading code and libraries that are needed
+  setwd(file.path(ScriptPath))
+  source("pred.fct.r")
+  source("chk.libs.r")
+  source("CalcMESS.r")
+
+  if(!is.null(residSmooth)) source("Pred.Surface.r")
+
+  source(paste(toupper(Model), ".helper.fcts.r", sep = ""))
+  chk.libs(Model)
   
     #for the last set we have to adjust tr$n based on the number of remaining tiles
     if((start.tile+nToDo)>tr$n) nToDo=tr$n-start.tile+1
     #have to hack in to change the extent for writting sections to seperate files because crop crashes for large files
-    start.val<-xyFromCell(RasterInfo,cellFromRowCol(RasterInfo, rownr=ifelse((start.tile+nToDo)>tr$n,nrow(RasterInfo),(tr$row[(start.tile+nToDo)]-1)), 
-            colnr=1))-.5*res(RasterInfo)[2]
-    end.val<-xyFromCell(RasterInfo,cellFromRowCol(RasterInfo, rownr=tr$row[start.tile], colnr=ncol(RasterInfo))) +.5*res(RasterInfo)[2]
+    start.val<-xyFromCell(RasterInfo,cellFromRowCol(RasterInfo, row=ifelse((start.tile+nToDo)>tr$n,nrow(RasterInfo),(tr$row[(start.tile+nToDo)]-1)), 
+            col=1))-.5*res(RasterInfo)[2]
+    end.val<-xyFromCell(RasterInfo,cellFromRowCol(RasterInfo, row=tr$row[start.tile], col=ncol(RasterInfo))) +.5*res(RasterInfo)[2]
     RasterInfo@extent@ymin<-start.val[1,2]
     RasterInfo@extent@ymax<-end.val[1,2]
     RasterInfo@nrows=as.integer(sum(tr$nrows[start.tile:(start.tile+nToDo-1)]))

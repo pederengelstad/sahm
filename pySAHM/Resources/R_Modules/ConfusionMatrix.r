@@ -42,22 +42,30 @@
 ## and does not imply endorsement by the U.S. Government.
 ###############################################################################
 
-confusion.matrix<-function(Stats,split.type){
+confusion.matrix <- function(Stats, split.type){
 
-     par(oma=c(4,3,5,3),mar=c(20,6,5,2))
-  if(split.type=="none") lo<-layout(matrix(data=c(1,2), nrow=1, ncol=2), c(4.5,1), 1)
-   else {lo<-layout(matrix(data=c(1,2,3), nrow=1, ncol=3), c(4.5,4.5,1), 1)
-         
-       if(split.type=="crossValidation"){
-                                 a<-lapply(Stats[names(Stats)!="train"],function(lst){lst$Cmx})
-                                  cmx<-a[[1]]
-                                  for(i in 2:length(a)) cmx<-cmx+a[[i]]
-                                  csv.stats<-apply(do.call("rbind",(lapply(Stats[names(Stats)!="train"],function(lst){
-                                       return(c(lst$Sens,lst$Specf,lst$Pcc,lst$Kappa,lst$Tss))}))),2,mean)
-                                Stats$crossValidation<-list(Cmx=cmx,Sens=csv.stats[1],Specf=csv.stats[2],Pcc=csv.stats[3],Kappa=csv.stats[4],Tss=csv.stats[5])
-                                Stats<-list("crossValidation"=Stats$crossValidation,"train"=Stats$train)
-            }
-          }
+  par(oma = c(4, 3, 5, 3), mar = c(20, 6, 5, 2))
+
+  if(split.type=="none"){
+
+    lo <- layout(matrix(data = c(1, 2), nrow = 1, ncol = 2), c(4.5, 1), 1)
+
+  } else {
+
+    lo <- layout(matrix(data = c(1, 2, 3), nrow = 1, ncol = 3), c(4.5, 4.5, 1), 1)
+
+    if(split.type == "crossValidation"){
+
+      a <- lapply(Stats[names(Stats) != "train"], function(lst){lst$Cmx})
+      cmx <- a[[1]]
+      for(i in 2:length(a)) cmx <- cmx + a[[i]]
+      csv.stats <- apply(do.call("rbind", (lapply(Stats[names(Stats) != "train"], function(lst){return(c(lst$Sens, lst$Specf, lst$Pcc, lst$Kappa, lst$Tss))}))), 2, mean)
+      Stats$crossValidation <- list(Cmx = cmx, Sens = csv.stats[1], Specf = csv.stats[2], Pcc = csv.stats[3], Kappa = csv.stats[4], Tss = csv.stats[5])
+      Stats <- list("crossValidation" = Stats$crossValidation, "train" = Stats$train)
+    
+    }
+  
+  }
  
 #zlim<-c(min(unlist(lapply(Stats,function(lst){100*lst$Cmx/sum(lst$Cmx)}))),max(unlist(lapply(Stats,function(lst){100*lst$Cmx/sum(lst$Cmx)}))))
 #instead of basing the zlim on the acutal confusion matricies, base them on the maximum achievable value for a cell given the ratio of pres/abs

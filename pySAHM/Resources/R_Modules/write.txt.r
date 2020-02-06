@@ -4,7 +4,8 @@ write.txt<-function(out,t0){
     glm="Generalized Linear Model Results\n",
     rf="Random Forest Modeling Results\n",
     brt="\nBoosted Regression Tree Modeling Results\n",
-    maxent="\nMAXENT\n")
+    maxent="\nMAXENT\n",
+    xgb="\nxgBoost Results\n")
              
   txt0 <- paste(model.label,"\n",
                       "Data:\n",out$input$ma.name,"\n",

@@ -327,7 +327,7 @@ class FieldDataQuery(object):
                     "original CSV were in NoData areas of the template and WERE NOT " +
                     "INCLUDED IN THE FDAW OUTPUT.")
 
-
+# there has to be a more efficient way of doing this
 def linesInFile(filename):
     f = open(filename)
     lines = 0

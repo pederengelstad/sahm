@@ -42,61 +42,95 @@
 ## and does not imply endorsement by the U.S. Government.
 ###############################################################################
 
-pred.fct<-function(model,x,Model){
-#Written by Marian Talbert to predict given a dataframe of input (with the expeption of maxlike which works on full rasters)
-# model = the model fit object
-# x     = a data frame without the response column obviously
-# Model = one of mars, glm, rf, brt, maxlike at present 
+# Written by Marian Talbert to predict given a dataframe of input (with the expeption of maxlike which works on full rasters)
+# Arguments:
+#
+# model     the model fit object as generated in R/java
+# x         Data frame without the response column
+# Model     Abbreviation of brt, glm, mars, rf, maxlike, or xgb 
 
-  y <- rep(NA,nrow(x))
+pred.fct = function(model, x, Model){
 
-  if(Model%in%c("glm","mars")){
- 
-   if("list"%in%class(model)) y <- try(as.vector(predict(model[[1]],x,type="response")),silent=TRUE)
-        else  y<- try(as.vector(predict(model,x,type="response")),silent=TRUE)
+  y = rep(NA, nrow(x))
+
+  if(Model %in% c("glm", "mars")){
+
+    if("list" %in% class(model)){
+
+      y = try(as.vector(predict(model[[1]], x, type = "response")), silent = TRUE)
+
+    } else {
+
+        y = try(as.vector(predict(model, x, type = "response")), silent = TRUE)
       
-     }
- 
- 
-  if(Model=="brt"){
-         # retrieve key items from the global environment #
-          # make predictions from complete data only #
-          #y <- rep(NA,nrow(x))
-          #y[complete.cases(x)] <- predict.gbm(model, x[complete.cases(x),],model$target.trees,type="response")
-          if(class(model[[1]])=="gbm"){
-                           prd<-function(model,x){
-                              preds <- rep(NA,nrow(x))
-                              preds[complete.cases(x)]<-predict.gbm(model,newdata=x[complete.cases(x),],n.trees=model$target.trees,type="response")
-                              return(preds) 
-                           }         
-                  #getting the predictions from each split of the data then taking out one column and getting the average
-                          lst.preds<-try(lapply(model,FUN=prd,x=x))
-                         y<-try(apply(do.call("rbind",lst.preds),2,mean))
-          }  else{
-                  # make predictions from full data #
-                  y[complete.cases(x)] <- try(predict.gbm(model,x[complete.cases(x),],model$target.trees,type="response"),silent=TRUE)        
-          }
+      }
   }
-  if(Model=="rf"){
-       # retrieve key items from the global environment #
-          # make predictions from complete data only #
-           if(class(model[[1]])=="randomForest"){
-                  #getting the predictions from each split of the data then taking out one column and getting the average
-                          lst.preds<-try(lapply(lapply(model,FUN=predict,newdata=x[complete.cases(x),],type="vote"),"[",,2))
-                         y[complete.cases(x)]<-try(apply(do.call("rbind",lst.preds),2,mean))
-                         	y[y==1]<-max(y[y<1],na.rm=TRUE)
-	                        y[y==0]<-min(y[y>0],na.rm=TRUE)
-                         }  else{
-                y[complete.cases(x)] <- try(as.vector(predict(model,newdata=x[complete.cases(x),],type="vote")[,2]),silent=TRUE)
-              }  
-   }
-   if(Model=="maxent"){
-   y[complete.cases(x)]<-try(maxent.predict(model,x[complete.cases(x),]),silent=TRUE)
-   }
-   if(Model=="udc"){
+ 
+ 
+  if(Model == "brt"){
+
+    # Retrieve key items from the global environment. 
+    # Make predictions from complete data only.
+
+    if(class(model[[1]]) == "gbm"){
+
+      prd = function(model, x){
+        preds = rep(NA, nrow(x))
+        preds[complete.cases(x)] = predict.gbm(model, newdata = x[complete.cases(x),], n.trees = model$target.trees, type = "response")
+        return(preds)
+      }
+
+      # getting the predictions from each split of the data then taking out one column and getting the average.
+      lst.preds = try(lapply(model, FUN = prd, x = x))
+      y = try(apply(do.call("rbind", lst.preds), 2, mean))
+
+    } else {
+
+        # Make predictions from full data
+        y[complete.cases(x)] = try(predict.gbm(model, x[complete.cases(x), ], model$target.trees, type = "response"), silent = TRUE)        
+      
+      }
+  }
+
+  if(Model == "rf"){
+
+    # Retrieve key items from the global environment.
+    # Make predictions from complete data only.
+
+    if(class(model[[1]]) == "randomForest"){
+      
+      # Getting the predictions from each split of the data then taking out one column and getting the average.
+      lst.preds = try(lapply(lapply(model, FUN = predict, newdata = x[complete.cases(x), ], type = "vote"), "[",,2))
+      y[complete.cases(x)] = try(apply(do.call("rbind", lst.preds), 2, mean))
+      y[y == 1] = max(y[y < 1], na.rm = TRUE)
+      y[y == 0] = min(y[y > 0], na.rm = TRUE)
+      
+    } else {
+
+        y[complete.cases(x)] = try(as.vector(predict(model,newdata=x[complete.cases(x),], type = "vote")[,2]), silent = TRUE)
+      
+      }  
+  }
+
+  if(Model == 'xgb'){
+
+    y[complete.cases(x)] = try(as.vector(predict(model[[1]], newdata = data.matrix(x[complete.cases(x),]))), silent = TRUE)
+
+  }
+
+  if(Model=="maxent"){
+
+    y[complete.cases(x)] = try(maxent.predict(model, x[complete.cases(x),]), silent = TRUE)
   
-      y[complete.cases(x)]<-try(udc.predict(model,x[complete.cases(x),]),silent=TRUE)
-    }
-    if(class(y)=="try-error") stop("Predicting the response for the new values failed.  One probable cause is that you are trying to predict to factor levels that were not present during model fitting.")
-return(y)
+  }
+
+  if(Model=="udc"){
+  
+      y[complete.cases(x)] = try(udc.predict(model, x[complete.cases(x),]), silent = TRUE)
+  }
+
+  if(class(y) == "try-error") stop("Predicting the response for the new values failed.  One probable cause is that you are trying to predict to factor levels that were not present during model fitting.")
+
+  return(y)
+
 }

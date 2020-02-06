@@ -255,7 +255,7 @@ model.fit<-function(dat,out,Model,full.fit=FALSE,pts=NULL,weight=NULL,Fold,...){
                    pres.votes[,i] <- predict(rf.full[[i]],type="vote")[rf.full[[i]]$y==1,2]
                    votes[dat$response==1]<-apply(pres.votes,1,mean)
                    
-                 	votes[votes==1]<-max(votes[votes<1])                      
+                  votes[votes==1]<-max(votes[votes<1])                      
                   votes[votes==0]<-min(votes[votes>0]) #from the original SAHM these can't be equal to 0 or 1 otherwise deviance can't be caluclated
                   #though I'm not sure deviance makes sense for RF anyway
                   #confusion matrix oob error and class error currently don't show up for used available but I think they should
@@ -273,4 +273,37 @@ model.fit<-function(dat,out,Model,full.fit=FALSE,pts=NULL,weight=NULL,Fold,...){
              }
 
 
-}
+#================================================================
+#                        XGB
+#================================================================= 
+  if(Model == "xgb"){
+    
+
+    dtrain = xgb.DMatrix(data = as.matrix(out$dat$ma$train$dat[, -1]), # your predictors
+                         label = out$dat$ma$train$dat$response)        # your response variable
+    
+    # Here is where we store the model results for the fully trained model. Don't need to set the seed here b/c it's set globally.    
+    xgb.full = list()
+    xgb.full[[1]] <- xgb.train(data = dtrain, 
+                           nrounds = out$input$nrounds, 
+                           objective = "binary:logistic", 
+                           eval.metric = "auc",
+                           nthreads = parallel::detectCores()-1, 
+                           subsample = out$input$subsample,        # 
+                           max_depth = out$input$max_depth,        # 
+                           eta = out$input$eta,                               # equivalent to learning rate
+                           gamma = out$input$xgb.gamma,                       # larger values lead to more conservative models
+                           min_child_weight = out$input$min_child_weight      # larger values lead to more conservative models
+                           )
+    
+    out$mods$final.mod <- xgb.full
+    
+    if(full.fit){
+      return(out)
+    } else {
+      return(xgb.full)  
+    }
+  
+  } # end of xgb model fitting
+
+} # end of entire function

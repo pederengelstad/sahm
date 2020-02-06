@@ -46,7 +46,7 @@ make.p.tif=T
 make.binary.tif=T
 opt.methods=2
 MESS=FALSE
-multCore=TRUE
+# multCore=TRUE
 
 # Interpret command line argurments #
 # Make Function Call #

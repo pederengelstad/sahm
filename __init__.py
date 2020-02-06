@@ -49,7 +49,7 @@ from vistrails.core.configuration import ConfigurationObject
 
 name = "SAHM"
 identifier = "gov.usgs.sahm"
-version = '2.0.0'
+version = '2.1.2'
 
 def package_dependencies():
     import vistrails.core.packagemanager
@@ -86,7 +86,7 @@ if system.systemType in ['Microsoft', 'Windows']:
     pyloc = sys.executable
     configuration = \
         ConfigurationObject(output_dir=r'C:\temp\SAHM_workspace',
-                            r_path=r'Central_R\R-3.2.0\bin',
+                            r_path=r'Central_R\R-3.5.0\bin',
                             maxent_path=r'Not Set',
                             java_path=r'java',
                             cur_session_folder=r"C:\temp\SAHM_workspace",

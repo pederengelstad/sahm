@@ -50,7 +50,7 @@ mars.degree=1
 mars.penalty=2
 opt.methods=2
 MESS=FALSE
-multCore=TRUE
+# multCore=TRUE
 
 # Interpret command line argurments #
 # Make Function Call #

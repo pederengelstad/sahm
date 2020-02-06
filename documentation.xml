@@ -1407,6 +1407,7 @@ Row counts start from 1.</Definition>
           <Option>Text</Option>
           <Option>Response Curves</Option>
           <Option>AUC</Option>
+          <Option>AUCPR</Option>
           <Option>Calibration</Option>
           <Option>Confusion</Option>
           <Option>Residuals</Option>

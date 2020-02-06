@@ -71,13 +71,17 @@ calcStat<-function(x,family,has.split){
                                              if(is.nan(null.dev)) null.dev=NA
         dev.fit=calc.deviance(auc.data$pres.abs, x$pred, x$weight, family=family) #*nrow(x$dat) Elith does not include this it might cause a weighting issue when averaging I'm not sure if I should include it
                                             if(is.nan(dev.fit)) dev.fit=NA
-        }                                    
+        }
+
         dev.exp=null.dev - dev.fit
         pct.dev.exp=dev.exp/null.dev*100
         correlation=cor(auc.data$pres.abs,x$pred)
+
         #have to use roc here because auc in the PresenceAbsence package incorretly assumes that the value must be greater than .5
         #this isn't necessarily true for an independent evaluation set
-        auc.fit<-roc(auc.data$pres.abs,auc.data$pred)
+        auc.fit <- roc(auc.data$pres.abs,auc.data$pred)
+        auc.pr <- pr.curve(scores.class0 = auc.data$pred, weights.class0 = auc.data$pres.abs)[[3]]
+        print(head(auc.data))
         calibration.stats<-calibration(auc.data$pres.abs, x$pred, family =family)
 
         if(family%in%c("binomial","bernoulli")){
@@ -89,13 +93,13 @@ calcStat<-function(x,family,has.split){
             TSS <- SENS+SPEC-1
 
             return(list(n.pres=n.pres,n.abs=n.abs,null.dev=null.dev,dev.fit=dev.fit,dev.exp=dev.exp,pct.dev.exp=pct.dev.exp,correlation=correlation,auc.data=auc.data,
-            auc.fit=auc.fit,Cmx=cmx,Pcc=PCC,Sens=SENS,Specf=SPEC,Kappa=KAPPA,Tss=TSS,calibration.stats=calibration.stats,thresh=x$thresh))
+            auc.fit=auc.fit,auc.pr=auc.pr,Cmx=cmx,Pcc=PCC,Sens=SENS,Specf=SPEC,Kappa=KAPPA,Tss=TSS,calibration.stats=calibration.stats,thresh=x$thresh))
           }
 
         if(family=="poisson"){
            prediction.error<-sum((auc.data$pres.abs-auc.data$pred)^2)
             return(list(n.pres=n.pres,n.abs=n.abs,null.dev=null.dev,dev.fit=dev.fit,dev.exp=dev.exp,pct.dev.exp=pct.dev.exp,correlation=correlation,auc.data=auc.data,
-            auc.fit=auc.fit,prediction.error=prediction.error,calibration.stats=calibration.stats))
+            auc.fit=auc.fit,auc.pr=auc.pr,prediction.error=prediction.error,calibration.stats=calibration.stats))
             }
 
     }

@@ -46,15 +46,19 @@ chk.libs <- function(Model){
 #Checks libraries for many functions I should probably pass just the list of libs to check but this helps me update 
 #documentation on all libraries required by SAHM 
 #Written by Marian Talbert 2/2012
+#Updated 7/18/2018: Added PRROC to libs list for models [P. Engelstad]
+#Updated 10/22/2019: Added ggplot2, dplyr to libs list for models [P. Engelstad]
+#Updated 12/09/2019: Added xgboost for new model [P. Engelstad]
+
      if(Model=="PairsExplore") libs=list("gam")
      if(Model=="Pred.inspect") libs=list("raster","gam")
-     if(Model%in%c("mars","glm","rf","gam","ann","brt","maxent","udc")) libs <- c("PresenceAbsence","rgdal","sp","survival","tools","raster","tcltk2","foreign","ade4","ROCR","ncf","splines")
+     if(Model%in%c("mars","glm","rf","gam","ann","brt","maxent","udc","xgb")) libs <- c("PresenceAbsence","rgdal","sp","survival","tools","raster","tcltk2","foreign","ade4","ROCR","ncf","splines","PRROC","gbm",'ggplot2','dplyr')
      if(Model=="udc")                libs<-as.list(c("rjson",libs))
      if(Model=="mars")               libs<-as.list(c("mda","earth","plotrix",libs))
      if(Model%in%c("glm","maxent"))  libs<-as.list(libs)
      if(Model=="rf")                 libs<-as.list(c("randomForest",libs))
      if(Model=="gam")                libs<-as.list(c("gam",libs))
-     if(Model=="ann")                libs<-as.list(c("nnet",libs))
+     if(Model=="xgb")                libs<-as.list(c("xgboost",libs))
      if(Model=="brt")                libs<-as.list(c("lattice","gbm",libs))
     
      if(Model=="GenPsdAbs")   libs<-list("adehabitatHR","ks","raster","rgdal","sp","spatstat")
@@ -67,5 +71,3 @@ chk.libs <- function(Model){
         "\n THIS IS OFTEN BECAUSE YOU DID NOT FOLLOW THE INSTALL INSTRUCTIONS ON PAGE 4 OF THE SAHM MANUAL\nINSTALL R IN A LOCATION WHERE YOU HAVE WRITE PERMISSION (Often NOT Program Files)!!!!",sep=""))
 
       }
-
-

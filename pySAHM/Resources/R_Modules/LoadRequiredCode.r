@@ -57,7 +57,7 @@ source(file.path(ScriptPath,"pred.fct.r"))
 
 #Calculating Evaluation Metrics and producing plots
 source(file.path(ScriptPath,"make.auc.r"))
-source(file.path(ScriptPath,"EvalStats.r"))
+# source(file.path(ScriptPath,"EvalStats.r"))
 source(file.path(ScriptPath,"ResidualImage.r"))
 source(file.path(ScriptPath,"Pred.Surface.r"))
 source(file.path(ScriptPath,"calc.deviance.r"))

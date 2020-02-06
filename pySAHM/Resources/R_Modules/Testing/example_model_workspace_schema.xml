@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<out>
+	<input>
+		Default fields are ma.name, output.dir, debug.mode, script.name, make.p.tif, make.binary.tif, response.col, xtest, ytest
+		Additional model parameters are appended to the default list
+
+		<debug.mode>
+			Indicates whether or not debug mode has been turned on. 	Options: TRUE, FALSE</debug.mode>
+		
+		<ma.name>
+			Filepath to CovariateCorrelationMDS_initial.csv for the specific model workspace
+		</ma.name>
+		
+		<make.binary.tif>
+			Indicates whether or not the binary map was produced.		
+			Options: TRUE, FALSE
+		</make.binary.tif>
+		
+		<make.p.tif>
+			Indicates whether or not the probability map was produced.	
+			Options: TRUE, FALSE
+		</make.p.tif>
+
+		<output.dir>
+			Filepath to folder where model results are stored
+		</output.dir>
+
+		<response.col>
+			'responseBinary'....?
+		</response.col>
+		
+		<script.name>
+			Abbreviation for model name (ex. randomForest --> 'rf')
+		</script.name>
+		
+		<tif.dir>
+			
+		</tif.dir>
+		
+		<xtest>
+			
+		</xtest>
+		
+		<ytest>
+			
+		</ytest>
+
+	</input>
+
+	<dat>
+		<input>
+			Description of dat$input objects
+
+			<FieldDataTmp>
+				Name of csv file of the input field data 				
+			</FieldDataTmp>
+			
+			<OrigFieldData>
+				
+			</OrigFieldData>
+			<CovSelectName></CovSelectName>
+			<ParcTemplate>
+				Filepath to template raster
+			</ParcTemplate>
+
+			<ParcOutputFolder>
+				
+			</ParcOutputFolder>
+		</input>
+		
+		<factor.levels></factor.levels>
+		<nPresAbs></nPresAbs>
+		<tif.ind>Names and filepaths to the PARC version rasters of the final model covariates</tif.ind>
+		<dims></dims>
+		<used.covs></used.covs>
+		<selector></selector>
+		<split.type></split.type>
+		<ma>
+			Contains data on k-fold cross-validation splits and training data
+			<bname></bname>
+			<bnameExpanded></bnameExpanded>
+			<split.label></split.label>
+		</ma>
+	</dat>
+	
+	<mods>
+		<final.mod>
+			Contains actual model object as stored by R, named simply as element [[1]]
+		</final.mod>
+		<tif.output>
+			<prob></prob>
+			<bin></bin>
+		</tif.output>
+		<auc.output></auc.output>
+		<interactions></interactions>
+		<summary></summary>
+		<params></params>
+		<predictions></predictions>
+		<n.vars.final></n.vars.final>
+		<vnames></vnames>
+	</mods>
+	
+	<cv>
+		<full.resid.deviance></full.resid.deviance>
+		
+		<full.test></full.test>
+		
+		<full.calib>
+			<intercept></intercept>
+			<slope></slope>
+			<test0b1></test0b1>
+			<test0|b1></test0|b1>
+			<testb1|a></testb1|a>
+		</full.calib>
+		
+		<pooled.deviance></pooled.deviance>
+		
+		<pooled.test></pooled.test>
+		
+		<pooled.calib>
+			<intercept></intercept>
+			<slope></slope>
+			<test0b1></test0b1>
+			<test0|b1></test0|b1>
+			<testb1|a></testb1|a>
+		</pooled.calib>
+		
+		<subset.deviance>
+			<subset.deviances></subset.deviances>
+			<subset.deviance.mean></subset.deviance.mean>
+			<subset.deviance.se></subset.deviance.se>
+		</subset.deviance>
+		
+		<subset.test>
+			<test.scores></test.scores>
+			<subset.test.mean></subset.test.mean>
+			<subset.test.se></subset.test.se>
+		</subset.test>
+		
+		<subset.calib>
+			<subset.calib>
+				<intercept></intercept>
+				<slope></slope>
+				<test1></test1>
+				<test2></test2>
+				<test3></test3>				
+			</subset.calib>
+			<subset.calib.mean>
+				<intercept></intercept>
+				<slope></slope>
+			</subset.calib.mean>
+		</subset.calib>
+
+		<resp.curves></resp.curves>
+		<cor.mat></cor.mat>
+
+	</cv>
+
+</out>

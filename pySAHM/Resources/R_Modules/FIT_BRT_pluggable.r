@@ -58,7 +58,7 @@ tolerance = 0.001
 seed=NULL
 opt.methods=2
 MESS=FALSE
-multCore=TRUE
+# multCore=TRUE
 predSelect=TRUE
 
 # Interpret command line argurments #

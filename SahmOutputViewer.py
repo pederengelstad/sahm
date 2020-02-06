@@ -69,7 +69,7 @@ class ModelOutputViewer(SpreadsheetCell):
                     ('ModelWorkspace', '(edu.utah.sci.vistrails.basic:Directory)'),
                     ('InitialModelOutputDisplay', '(edu.utah.sci.vistrails.basic:String)',
                      {'entry_types': "['enum']",
-                      'values': "[['Text', 'Response Curves', 'AUC', 'Calibration', 'Confusion', 'Residuals']]", 'optional': True,
+                      'values': "[['Text', 'Response Curves', 'AUC','AUCPR', 'Calibration', 'Confusion', 'Residuals']]", 'optional': True,
                       'defaults':'["AUC"]'}),
                     ('Location', '(org.vistrails.vistrails.spreadsheet:CellLocation)',
                                     {'optional':True})]
@@ -102,7 +102,7 @@ class ModelOutputViewer(SpreadsheetCell):
         if self.has_input("ModelWorkspace") and \
             utils.check_if_model_finished(model_workspace):
 
-            auc_graph = text_output = response_curves = calibration_graph = None
+            auc_graph = aucpr_graph = text_output = response_curves = calibration_graph = None
             confusion_graph = residuals_graph = variable_graph = model_label = initial_display = None
 
             window = spreadsheetController.findSpreadsheetWindow()
@@ -113,6 +113,10 @@ class ModelOutputViewer(SpreadsheetCell):
             auc_graph_path = self.findFile(model_dir_full, '_modelEvalPlot.png')  #  os.path.join(model_dir_full, model_name + '_modelEvalPlot.jpg')
             if os.path.exists(auc_graph_path):
                 auc_graph = window.file_pool.make_local_copy(auc_graph_path)
+
+            aucpr_graph_path = self.findFile(model_dir_full, '_AUCPR_Plot.png')  #  os.path.join(model_dir_full, model_name + '_modelEvalPlot.jpg')
+            if os.path.exists(aucpr_graph_path):
+                aucpr_graph = window.file_pool.make_local_copy(aucpr_graph_path)
 
             text_output_path = self.findFile(model_dir_full, '_output.txt')  #  os.path.join(model_dir_full, model_name + '_output.txt')
             if os.path.exists(text_output_path):
@@ -154,6 +158,7 @@ class ModelOutputViewer(SpreadsheetCell):
                 initial_display = 'AUC'
 
             self.cellWidget = self.displayAndWait(SAHMOutputViewerCellWidget, (auc_graph,
+                                                                          aucpr_graph,
                                                                           text_output,
                                                                           response_curves,
                                                                           calibration_graph,
@@ -192,6 +197,10 @@ class SAHMOutputViewerCellWidget(QCellWidget):
         self.gs_auc_graph = QtGui.QGraphicsScene()
         self.ui.gv_auc.setScene(self.gs_auc_graph)
         self.gs_auc_graph.wheelEvent = self.wheel_event_auc
+
+        self.gs_aucpr_graph = QtGui.QGraphicsScene()
+        self.ui.gv_aucpr.setScene(self.gs_aucpr_graph)
+        self.gs_aucpr_graph.wheelEvent = self.wheel_event_aucpr
 
         self.gs_calibration_graph = QtGui.QGraphicsScene()
         self.ui.gv_calibration.setScene(self.gs_calibration_graph)
@@ -264,7 +273,7 @@ class SAHMOutputViewerCellWidget(QCellWidget):
         Update the widget contents based on the input data
 
         """
-        (auc_graph, text_output, self.response_curves, calibration_graph, confusion_graph,
+        (auc_graph, aucpr_graph, text_output, self.response_curves, calibration_graph, confusion_graph,
          residuals_graph, variable_graph, model_label, inital_display) = inputPorts
 
         self.images = {}
@@ -282,6 +291,18 @@ class SAHMOutputViewerCellWidget(QCellWidget):
                                        self.ui.gv_auc,
                                        max_size]
 
+        if aucpr_graph:
+            pixmap = QtGui.QPixmap(aucpr_graph.name)
+            max_size = self.getMaxSize(self.ui.gv_aucpr)
+            scaled_pixmap = pixmap.scaled(max_size, max_size,
+                                            QtCore.Qt.KeepAspectRatio,
+                                            QtCore.Qt.SmoothTransformation)
+
+            self.images['aucpr_graph'] = [pixmap,
+                                       scaled_pixmap,
+                                       self.gs_aucpr_graph,
+                                       self.ui.gv_aucpr,
+                                       max_size]
         self.ui.crv_combobox.clear()
         curindex = 0
         if self.response_curves:
@@ -353,7 +374,7 @@ class SAHMOutputViewerCellWidget(QCellWidget):
         self.text_urlSrc = QtCore.QUrl.fromLocalFile(text_output.name)
         self.text_browser.load(self.text_urlSrc)
 
-        choices = ['Text', 'Response Curves', 'AUC', 'Calibration', 'Confusion', 'Residuals', 'Variable Importance']
+        choices = ['Text', 'Response Curves', 'AUC', 'AUCPR', 'Calibration', 'Confusion', 'Residuals', 'Variable Importance']
         selected_index = choices.index(inital_display)
         self.ui.tabWidget.setCurrentIndex(selected_index)
 
@@ -382,6 +403,9 @@ class SAHMOutputViewerCellWidget(QCellWidget):
 
     def wheel_event_auc(self, event):
         self.wheel_event(event, 'auc_graph', QtCore.Qt.SmoothTransformation)
+
+    def wheel_event_aucpr(self, event):
+        self.wheel_event(event, 'aucpr_graph', QtCore.Qt.SmoothTransformation)
 
     def wheel_event_crv(self, event):
         self.wheel_event(event, 'crv_graph', QtCore.Qt.SmoothTransformation)
@@ -659,6 +683,21 @@ class Ui_Frame(object):
         self.tabWidget.addTab(self.auc, _fromUtf8(""))
         self.tabWidget.setTabToolTip(self.tabWidget.indexOf(self.auc), QtGui.QApplication.translate("Frame", "Area under the curve (AUC)", None, QtGui.QApplication.UnicodeUTF8))
 
+        self.aucpr = QtGui.QWidget()
+        self.aucpr.setObjectName(_fromUtf8("aucpr"))
+        self.horizontalLayout_4 = QtGui.QHBoxLayout(self.aucpr)
+        self.horizontalLayout_4.setSpacing(0)
+        self.horizontalLayout_4.setMargin(0)
+        self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
+        self.gv_aucpr = QtGui.QGraphicsView(self.aucpr)
+        self.gv_aucpr.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+        self.gv_aucpr.setTransformationAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
+        self.gv_aucpr.setResizeAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
+        self.gv_aucpr.setObjectName(_fromUtf8("gv_aucpr"))
+        self.horizontalLayout_4.addWidget(self.gv_aucpr)
+        self.tabWidget.addTab(self.aucpr, _fromUtf8(""))
+        self.tabWidget.setTabToolTip(self.tabWidget.indexOf(self.aucpr), QtGui.QApplication.translate("Frame", "Area under the Precision-Recall curve (AUCPR)", None, QtGui.QApplication.UnicodeUTF8))
+
         self.calibration = QtGui.QWidget()
         self.calibration.setObjectName(_fromUtf8("calibration"))
         self.horizontalLayout_5 = QtGui.QHBoxLayout(self.calibration)
@@ -726,6 +765,7 @@ class Ui_Frame(object):
 #        self.tabWidget.setTabText(self.tabWidget.indexOf(self.response_curves), QtGui.QApplication.translate("Frame", "Response", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.crv), QtGui.QApplication.translate("Frame", "Response Curves", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.auc), QtGui.QApplication.translate("Frame", "AUC", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.aucpr), QtGui.QApplication.translate("Frame", "AUCPR", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.calibration), QtGui.QApplication.translate("Frame", "Calibration", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.confusion), QtGui.QApplication.translate("Frame", "Confusion", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.residuals), QtGui.QApplication.translate("Frame", "Residuals", None, QtGui.QApplication.UnicodeUTF8))

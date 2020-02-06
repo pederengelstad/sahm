@@ -42,146 +42,202 @@
 ## and does not imply endorsement by the U.S. Government.
 ###############################################################################
 
-generic.model.fit<-function(out,Model,t0){
-
-#This code recognizes the specified model signature as well as several tags that change the analysis such as
-#differnt responses (pres/abs, used/available, count) and user specified options and fits the appropriate model 
-#returning results in a 
-#format common to all models so further output functions can work the same for all models.
 #Written by Marian Talbert 11/2011
+#
+# This code recognizes the specified model signature as well as several tags that change the analysis such as
+# different responses (pres/abs, used/available, count) and user specified options and fits the appropriate model 
+# returning results in a format common to all models so further output functions can work the same for all models.
 
-attach(out$input)
-attach(out$dat$ma$train)
-on.exit(detach(out$dat$ma$train))
-on.exit(detach(out$input))
-   
-     out<-model.fit(dat,out,Model,weight=weight,full.fit=TRUE)
-       write.txt(out,t0)         
-  if(Model=="glm") {
-     
-      #post processing to get a common output for all model fits
-            txt0<-paste("\n\n","Settings:\n","\n\t model family          : ",model.family,
-                                             "\n\t simplification method : ",simp.method,
-            "\n\n\n","Results:\n\t ","number covariates in final model   : ",length(attr(terms(formula(out$mods$final.mod[[1]])),"term.labels")),"\n",sep="")
-            print(out$mods$final.mod[[1]]$summary <- summary(out$mods$final.mod[[1]]))
-             
-            capture.output(cat(txt0),out$mods$final.mod[[1]]$summary,file=paste(out$dat$bname,"_output.txt",sep=""),append=TRUE)
-            cat("\n","Finished with stepwise GLM","\n")
-            cat("Summary of Model:","\n")
+generic.model.fit = function(out,Model,t0){
 
-                if(length(coef(out$mods$final.mod[[1]]))==1) stop("Null model was selected.  \nEvaluation metrics and plots will not be produced")
+  attach(out$input)
+  attach(out$dat$ma$train)
+  on.exit(detach(out$dat$ma$train))
+  on.exit(detach(out$input))
 
-              #storing number of variables in final model
-              out$mods$n.vars.final<-length(attr(terms(formula(out$mods$final.mod[[1]])),"term.labels"))
-              out$mods$vnames<-attr(terms(formula(out$mods$final.mod[[1]])),"term.labels")
-              #have to remove all the junk with powsers and interactions for mess map production to work
-              out$mods$vnames<-unique(unlist(strsplit(gsub("I\\(","",gsub("\\^2)","",out$mods$vnames)),":")))
-               }
+  out = model.fit(dat, out, Model, weight = weight, full.fit = TRUE)
+  write.txt(out, t0)
+
+  if(Model == "brt"){
                
- if(Model=="mars"){        
-           
-       #post processing steps to aggregate and summarize ouput 
-         if(out$input$PsdoAbs){ 
-                 varIp <- do.call("rbind",fit_contribs)
-                 TimesIncl <- table(rownames(varIp))
-                 varIp <- aggregate(varIp,list(rownames(varIp)),FUN=mean)
-                 varIp$TimesIncl <- TimesIncl
-                 varIp <- varIp[order(varIp$nsubsets,decreasing =TRUE),c(1,4,5,7,9)] #ordering by most important and removing columns I don't want
-                 varIp <- format(varIp,digits=3) #formatting
-                 rownames(varIp)<-varIp[,1]; varIp<-varIp[,-1]
-          } else varIp<-fit_contribs[[1]]
-         
-          if(length(grep("-unused",rownames(varIp)))!=0) varIp<-varIp[-c(grep("-unused",rownames(varIp))),]
-          
-          x<-varIp
-          
-          #if there are factors the new mars gives them names based on pred.name and level so we have go remove these names and
-                 #record this as just one predictor I'm not really sure how this will work if there are multiple factors or multiple levels of a factor
-          if(any(badName<-is.na(match(rownames(varIp),names(out$dat$ma$train$dat))))){
-                     indx<-which(badName==TRUE,arr.ind=TRUE)
-                     origNames<-vector()
-                     for(i in 1:length(indx)){
-                            origNames<-which(!is.na(pmatch(names(out$dat$ma$train$dat),rownames(varIp)[indx[i]])),arr.ind=TRUE)
-                     }
-                     origNames<-names(out$dat$ma$train$dat)[unique(origNames)]
-                     varIp<-varIp[-c(indx),]#I have to remove these because with multiple factor levels they will have multiple rows
-                     NewNames<-c(rownames(varIp),origNames)
-                     varIp<-rbind(as.matrix(varIp),matrix(data=NA,nrow=length(origNames),ncol=4))
-                     varIp<- apply(varIp,2,as.numeric)  
-                     rownames(varIp)<-NewNames
-                         
-          }
-                 
-      #caputuring output
-          cat("Summary of Model:","\n")
-          print(out$mods$summary <- x)
-           
-           out$mods$contributions$var<-names(dat)[-1]
-           out$mods$n.vars.final<-nrow(varIp)
-           out$mods$vnames<-rownames(varIp)
+    txt0 = paste("\n\n","Settings:\n",
+                if(out$input$PsdoAbs) "(Averaged across available splits)\n", 
+                "\n\trandom seed used             : ", out$input$seed,
+                "\n\ttree complexity              : ", out$mods$parms$tc.full,
+                "\n\tlearning rate                : ", round(out$mods$lr.mod$lr,4),
+                "\n\tn(trees)                     : ", mean(unlist(lapply(out$mods$final.mod, function(lst){lst$n.trees}))),
+                "\n\tmodel simplification         : ", simp.method,
+                "\n\tn folds                      : ", n.folds,
+                "\n\tn covariates in final model  : ", out$mods$n.vars.final, sep = "")
 
-          txt0 <- paste("\n\n","Settings:\n",
-                      "\n\trandom seed used             : ",out$input$seed,
-                      "\n\tmars degree                  : ",out$input$mars.degree,
-                      "\n\tmars penalty                 : ",out$input$mars.penalty,"\n\n",sep="")
-          cat("\n","Storing output...","\n","\n")
-          capture.output(cat(txt0),file=paste(out$dat$bname,"_output.txt",sep=""),append=TRUE)
-          capture.output(cat("\n\nSummary of Model:\n"),file=paste(out$dat$bname,"_output.txt",sep=""),append=TRUE)  
-          capture.output(print(out$mods$summary),file=paste(out$dat$bname,"_output.txt",sep=""),append=TRUE)
+    txt1 = "\nRelative influence of predictors in final model:\n\n"
+    txt2 = if(!out$input$PsdoAbs){
 
-      }
-              
- if(Model=="brt"){
-               
-           txt0 <- paste("\n\n","Settings:\n",
-                      if(out$input$PsdoAbs) "(Averaged across available splits)\n", 
-                      "\n\trandom seed used             : ",out$input$seed,
-                      "\n\ttree complexity              : ",out$mods$parms$tc.full,
-                      "\n\tlearning rate                : ",round(out$mods$lr.mod$lr,4),
-                      "\n\tn(trees)                     : ",mean(unlist(lapply(out$mods$final.mod,function(lst){lst$n.trees}))),
-                      "\n\tmodel simplification         : ",simp.method,
-                      "\n\tn folds                      : ",n.folds,
-                      "\n\tn covariates in final model  : ",out$mods$n.vars.final,
-             sep="")
-          txt1 <- "\nRelative influence of predictors in final model:\n\n"
-          txt2 <- if(!out$input$PsdoAbs) "\nImportant interactions in final model:\n\n"
-                     else "\nImportant interactions in at least one split of available points:\n\n"
-                    
-          capture.output(cat(txt0),cat(txt1),print(out$mods$summary,row.names=FALSE),cat(txt2),print(out$mods$interactions,row.names=F),file=paste(out$dat$bname,"_output.txt",sep=""),
-             append=TRUE)
-          cat(txt0);cat(txt1);print(out$mods$summary);cat(txt2);print(out$mods$interactions,row.names=F)
-      }
- 
-   if(Model=="rf"){
-              
-              txt0 <- paste("\n\n","Settings:",
-              "\n\trandom seed used                       : ",out$input$seed,
-              "\n\tn covariates considered at each split  : ", mean(unlist(lapply(out$mods$final.mod,"[",14))),
-                if(out$input$PsdoAbs==TRUE) "\n\t   (averaged over each used available split)\n",
-              "\n\tn trees                                : ",n.trees,
-                 if(out$input$PsdoAbs==TRUE) "\n\t   (for each used available split)\n",
-              sep="")
-          txt1 <- "\n\nRelative performance of predictors in final model:\n\n"
-          
-          capture.output(cat(txt0),cat(txt1),print(round(out$mods$summary,4)),file=paste(out$dat$bname,"_output.txt",sep=""),append=TRUE) 
-        
-         #storing number of variables in final model
-        out$mods$n.vars.final<-length(out$dat$used.covs) #random forest doesn't drop variables
-        out$mods$vnames<-out$dat$used.covs
-   }
-   
-     if(Model=="maxent"){
-      #maybe parse the parameters file to write out settings at some point
-     
-         #storing number of variables in final model
-        out$mods$n.vars.final<- out$mods$n.vars.final<-ncol(out$dat$ma$train$dat)-1
-        out$mods$vnames<-names(out$dat$ma$train$dat)[-1]
-   }
-   
-   if(Model=="udc"){
-    out$mods$n.vars.final<- length(out$mods$final.mod[[1]])
-        out$mods$vnames<-names(out$mods$final.mod[[1]])
-   }
+            "\nImportant interactions in final model:\n\n"
+
+            } else {
+
+                "\nImportant interactions in at least one split of available points:\n\n"
+              }
+
+    capture.output(cat(txt0), cat(txt1), print(out$mods$summary, row.names = FALSE), cat(txt2), print(out$mods$interactions, row.names = F), 
+      file = paste(out$dat$bname, "_output.txt", sep = ""), append = TRUE)
+
+    cat(txt0);cat(txt1);print(out$mods$summary);cat(txt2);print(out$mods$interactions,row.names=F)
   
+  }
+
+  if(Model == "glm"){
+
+    #post processing to get a common output for all model fits
+    txt0 = paste("\n\n", "Settings:\n","\n\t model family          : ", model.family, 
+                                       "\n\t simplification method : ", simp.method,
+            "\n\n\n","Results:\n\t ","number covariates in final model   : ",length(attr(terms(formula(out$mods$final.mod[[1]])),"term.labels")),"\n",sep="")
+
+    print(out$mods$final.mod[[1]]$summary <- summary(out$mods$final.mod[[1]]))
+             
+    capture.output(cat(txt0),out$mods$final.mod[[1]]$summary, file = paste(out$dat$bname, "_output.txt", sep = ""), append = TRUE)
+    cat("\n", "Finished with stepwise GLM", "\n")
+    cat("Summary of Model:", "\n")
+
+    if(length(coef(out$mods$final.mod[[1]])) == 1) stop("Null model was selected.  \nEvaluation metrics and plots will not be produced")
+
+      #storing number of variables in final model
+      out$mods$n.vars.final = length(attr(terms(formula(out$mods$final.mod[[1]])), "term.labels"))
+      out$mods$vnames = attr(terms(formula(out$mods$final.mod[[1]])), "term.labels")
+      
+      #have to remove all the junk with powsers and interactions for mess map production to work
+      out$mods$vnames = unique(unlist(strsplit(gsub("I\\(", "", gsub("\\^2)", "", out$mods$vnames)), ":")))
+    
+  }
+               
+  if(Model == "mars"){
+
+    #post processing steps to aggregate and summarize ouput
+    if(out$input$PsdoAbs){ 
+
+      varIp = do.call("rbind", fit_contribs)
+      TimesIncl = table(rownames(varIp))
+      varIp = aggregate(varIp, list(rownames(varIp)), FUN = mean)
+      varIp$TimesIncl = TimesIncl
+      varIp = varIp[order(varIp$nsubsets, decreasing = TRUE), c(1, 4, 5, 7, 9)] #ordering by most important and removing columns I don't want
+      varIp = format(varIp, digits = 3) #formatting
+      rownames(varIp) = varIp[,1]; varIp = varIp[,-1]
+    
+    } else {
+
+        varIp = fit_contribs[[1]]
+      
+      }
+
+    if(length(grep("-unused", rownames(varIp))) != 0) varIp = varIp[-c(grep("-unused", rownames(varIp))),]
+
+    x = varIp
+
+    # If there are factors the new mars gives them names based on pred.name and level so we have go remove these names and
+    # record this as just one predictor I'm not really sure how this will work if there are multiple factors or multiple levels of a factor
+
+    if(any(badName = is.na(match(rownames(varIp), names(out$dat$ma$train$dat))))){
+
+      indx = which(badName == TRUE, arr.ind = TRUE)
+      origNames = vector()
+      
+      for(i in 1:length(indx)){
+
+        origNames = which(!is.na(pmatch(names(out$dat$ma$train$dat), rownames(varIp)[indx[i]])), arr.ind = TRUE)
+      
+      }
+      
+      origNames = names(out$dat$ma$train$dat)[unique(origNames)]
+      varIp = varIp[-c(indx),] #I have to remove these because with multiple factor levels they will have multiple rows
+      NewNames = c(rownames(varIp), origNames)
+      varIp = rbind(as.matrix(varIp), matrix(data = NA, nrow = length(origNames), ncol = 4))
+      varIp = apply(varIp, 2, as.numeric) 
+      rownames(varIp) = NewNames
+                           
+    }
+
+    #caputuring output
+    cat("Summary of Model:", "\n")
+    print(out$mods$summary <- x)
+     
+     out$mods$contributions$var = names(dat)[-1]
+     out$mods$n.vars.final = nrow(varIp)
+     out$mods$vnames = rownames(varIp)
+
+    txt0 = paste("\n\n","Settings:\n",
+                "\n\trandom seed used             : ",out$input$seed,
+                "\n\tmars degree                  : ",out$input$mars.degree,
+                "\n\tmars penalty                 : ",out$input$mars.penalty,"\n\n",sep="")
+
+    cat("\n","Storing output...","\n","\n")
+          capture.output(cat(txt0), file = paste(out$dat$bname, "_output.txt", sep = ""), append = TRUE)
+          capture.output(cat("\n\nSummary of Model:\n"), file = paste(out$dat$bname, "_output.txt", sep = ""), append = TRUE)  
+          capture.output(print(out$mods$summary), file = paste(out$dat$bname, "_output.txt", sep = ""), append = TRUE)
+
+  }
+
+
+  if(Model == "maxent"){
+
+    #storing number of variables in final model
+    out$mods$n.vars.final = out$mods$n.vars.final = ncol(out$dat$ma$train$dat)-1
+    out$mods$vnames = names(out$dat$ma$train$dat)[-1]
+   
+  }
+
+
+  if(Model == "rf"){
+
+    txt0 = paste("\n\n","Settings:",
+    "\n\trandom seed used                       : ", out$input$seed,
+    "\n\tn covariates considered at each split  : ", mean(unlist(lapply(out$mods$final.mod, "[",14))),
+
+    if(out$input$PsdoAbs == TRUE) "\n\t   (averaged over each used available split)\n",
+    "\n\tn trees                                : ", n.trees,
+
+    if(out$input$PsdoAbs==TRUE) "\n\t   (for each used available split)\n", sep = "")
+
+    txt1 = "\n\nRelative performance of predictors in final model:\n\n"
+
+    capture.output(cat(txt0), cat(txt1), print(round(out$mods$summary, 4)), file = paste(out$dat$bname, "_output.txt", sep = ""), append = TRUE) 
+        
+    #storing number of variables in final model
+    out$mods$n.vars.final = length(out$dat$used.covs) #random forest doesn't drop variables
+    out$mods$vnames = out$dat$used.covs
+  
+  }
+
+
+  if(Model == "udc"){
+
+    out$mods$n.vars.final = length(out$mods$final.mod[[1]])
+    out$mods$vnames = names(out$mods$final.mod[[1]])
+   
+  }
+
+  
+  if(Model == 'xgb'){
+
+    # Definitely want to put a summary of args
+    txt0 = paste("\n\n","Settings:\n",
+                "\n\trandom seed used             : ",out$input$seed,
+                "\n\tnrounds                      : ",out$input$nrounds,
+                "\n\teta                          : ",out$input$eta,
+                "\n\tgamma                        : ",out$input$xgb.gamma,
+                "\n\tmax depth                    : ",out$input$max_depth,
+                "\n\tmin child weight             : ",out$input$min_child_weight,
+                "\n\tsubsample perc               : ",out$input$subsample,
+                "\n\n",sep="")
+
+    capture.output(cat(txt0), file = paste(out$dat$bname, "_output.txt", sep = ""), append = TRUE) 
+
+    # Storing number of variables in final model
+    out$mods$n.vars.final = out$mods$final.mod[[1]]$nfeatures
+    out$mods$vnames = out$mods$final.mod[[1]]$feature_names
+
+  }
+
   return(out)
+
 }

@@ -171,11 +171,21 @@ class FieldData(SAHMPathModule):
     __doc__ = GenModDoc.construct_module_doc('FieldData')
     _output_ports = [('value', '(gov.usgs.sahm:FieldData:DataInput)'), ]
 
-class TemplateLayer(SAHMPathModule):
+
+class TemplateLayer(Module, SAHMDocumentedModule):
     '''
     '''
     __doc__ = GenModDoc.construct_module_doc('TemplateLayer')
-    _output_ports = [('value', '(gov.usgs.sahm:TemplateLayer:DataInput)'), ]
+    _input_ports = [('file', '(edu.utah.sci.vistrails.basic:File)', {'optional':True})]
+    _output_ports = [('value', '(gov.usgs.sahm:TemplateLayer:DataInput)')]
+    
+    def compute(self):
+        items = self.force_get_input_list('file')
+        for i in items:
+            if len(str(i)) > 14:
+                template = utils.get_relative_path(i, module=self)
+                writetolog(str(template))
+                self.set_output('value', template)
 
 class Predictor(Module, SAHMDocumentedModule):
     '''
@@ -604,6 +614,31 @@ class ApplyModel(Model):
 
         Model.compute(self)
 
+class xgBoost(Model):
+    __doc__ = GenModDoc.construct_module_doc('xgBoost')
+
+    _input_ports = list(Model._input_ports)
+    _input_ports.extend([('nrounds', '(edu.utah.sci.vistrails.basic:Integer)', {'defaults':'["10"]', 'optional':True}),
+                         ('eta', '(edu.utah.sci.vistrails.basic:Float)', {'defaults':'["1.0"]', 'optional':True}),
+                         ('gamma', '(edu.utah.sci.vistrails.basic:Float)', {'defaults':'["0"]', 'optional':True}),
+                         ('max_depth', '(edu.utah.sci.vistrails.basic:Integer)', {'defaults':'["6"]', 'optional':True}),                         
+                         ('min_child_weight', '(edu.utah.sci.vistrails.basic:Float)', {'defaults':'["0"]', 'optional':True}),
+                         ('subsample', '(edu.utah.sci.vistrails.basic:Float)', {'defaults':'["0.632"]', 'optional':True}),
+                          ])
+
+    def __init__(self):
+        global models_path
+        Model.__init__(self)
+        self.name = 'FIT_XGB_pluggable.r'
+        self.abbrev = 'xgb'
+        self.port_map.update({'nrounds':('nrounds', None, False),  #  These are all xgBoost specific ports
+                         'eta':('eta', None, False),               
+                         'gamma':('gamma', None, False),           
+                         'max_depth':('md', None, False),          
+                         'min_child_weight':('mcw', None, False),  
+                         'subsample':('samp', None, False),        
+                         })
+
 class BoostedRegressionTree(Model):
     __doc__ = GenModDoc.construct_module_doc('BoostedRegressionTree')
 
@@ -843,6 +878,7 @@ class BackgroundSurfaceGenerator(SAHMDocumentedModule, Module):
                         ('continuous', '(edu.utah.sci.vistrails.basic:Boolean)', {'defaults':'["False"]', 'optional':True}),
                         ('run_name_info', '(gov.usgs.sahm:OutputNameInfo:Other)', {'optional':False}), ]
     _output_ports = [("KDE", "(edu.utah.sci.vistrails.basic:File)")]
+    # _output_ports = [('KDE', '(gov.usgs.sahm:BackgroundSurfaceGenerator:Tools)')]
 
     def compute(self):
         port_map = {'templateLayer': ('templatefName', None, True),
@@ -966,6 +1002,7 @@ class MDSBuilder(SAHMDocumentedModule, Module):
     _input_ports = [('RastersWithPARCInfoCSV', '(gov.usgs.sahm:RastersWithPARCInfoCSV:Other)'),
                                  ('fieldData', '(gov.usgs.sahm:FieldData:DataInput)'),
                                  ('backgroundPointCount', '(edu.utah.sci.vistrails.basic:Integer)', {'optional':True}),
+                                 # ('backgroundProbSurf', '(gov.usgs.sahm:BackgroundSurfaceGenerator:Tools)'),
                                  ('backgroundProbSurf', '(edu.utah.sci.vistrails.basic:File)'),
                                  ('Seed', '(edu.utah.sci.vistrails.basic:Integer)', {'defaults':'["{}"]'.format(utils.get_seed()), 'optional':True}),
                                  ('run_name_info', '(gov.usgs.sahm:OutputNameInfo:Other)', {'optional':False}), ]
@@ -1895,7 +1932,7 @@ def initialize():
         #  we're on a windows box, they probably installed VisTrails, R, and SAHM
         #  using the prebuilt msi,  let's make sure they're using the supplied R
         base_dir = os.path.split(os.path.split(sys.executable)[0])[0]
-        default_r_dname = r"Central_R\R-3.2.0\bin"
+        default_r_dname = r"Central_R\R-3.5.0\bin"
         r_path = os.path.join(base_dir, default_r_dname)
         if os.path.exists(r_path):
             configuration.r_path = r_path
@@ -2255,14 +2292,12 @@ _modules = generate_namespaces({'DataInput': [
                                                            'moduleFringe':model_fringe}),
                                            (MAXENT, {'moduleColor':model_color,
                                                            'moduleFringe':model_fringe}),
-                                           (BoostedRegressionTree,
-                                                {
-                                                 'moduleColor':model_color,
+                                           (BoostedRegressionTree,{'moduleColor':model_color,
                                                            'moduleFringe':model_fringe}),
-                                           (UserDefinedCurve,
-                                                {
-                                                 'moduleColor':model_color,
+                                           (UserDefinedCurve,{'moduleColor':model_color,
                                                            'moduleFringe':model_fringe}),
+                                           (xgBoost,{'moduleColor':model_color,
+                                                           'moduleFringe':model_fringe}),                                                           
                                            ],
                                 'Other':  [(Model, {'abstract': True}),
                                            (VectorLayer, {'abstract': True}),
@@ -2307,9 +2342,9 @@ for m in ['GLM', 'MARS', 'RandomForest', 'BoostedRegressionTree', 'MAXENT']:
 _upgrades['Output|SAHMSpatialOutputViewerCell'] = [UpgradeModuleRemap(None, '2.0.0', '2.0.0', 'Output|ModelMapViewer', {}), ]
 _upgrades['Output|SAHMModelOutputViewerCell'] = [UpgradeModuleRemap(None, '2.0.0', '2.0.0', 'Output|ModelOutputViewer', {})]
 
-_upgrades['Tools|BackgroundSurfaceGenerator'] = [UpgradeModuleRemap(None, '1.0.2', '1.0.2', None,
+_upgrades['Tools|BackgroundSurfaceGenerator'] = [UpgradeModuleRemap(None, '1.0.2', '2.0.1', None,
                                   dst_port_remap={'bias': 'continuous'})]
-_upgrades['Tools|MDSBuilder'] = [UpgradeModuleRemap(None, '2.0.0', '2.0.0', None,
+_upgrades['Tools|MDSBuilder'] = [UpgradeModuleRemap(None, '2.0.0', '2.0.1', None,
                                   dst_port_remap={'backgroundpointCount': 'backgroundPointCount',
                                                   'backgroundPointType':None})]
 _upgrades['Tools|PARC'] = [UpgradeModuleRemap(None, '1.0.2', '1.0.2', None,

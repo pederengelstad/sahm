@@ -67,11 +67,10 @@ keep.inbag=FALSE
 make.r.curves=T
 seed=NULL
 opt.methods=2
-seed=NULL
 MESS=FALSE
 xtest=NULL
 ytest=NULL
-multCore=TRUE
+# multCore=TRUE
 
 Args <- commandArgs(trailingOnly=FALSE)
 

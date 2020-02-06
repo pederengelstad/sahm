@@ -28,7 +28,7 @@ my.panel.smooth<-function (x, y, col = par("col"), bg = NA, pch = par("pch"),fam
               g<-glm(y~x+x^2,weights=wgt,family=family)
               y.fit<-predict(g,type="response")
           }  else {
-              y.fit<-predict.gam(g,type="response")
+              y.fit<-predict.Gam(g,type="response")
               gam.failed=FALSE
           }
      } else{

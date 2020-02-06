@@ -159,7 +159,6 @@ mess=FALSE
 new.tiffs=NULL
 produce.metrics=TRUE
 
-
 # Interpret command line argurments #
 # Make Function Call #
 Args <- commandArgs(trailingOnly=FALSE)
@@ -178,9 +177,10 @@ for (i in 1:length(Args)){
     	if(argSplit[[1]][1]=="o") out.dir <- argSplit[[1]][2]
     	if(argSplit[[1]][1]=="mes")  mess <- argSplit[[1]][2]
    		if(argSplit[[1]][1]=="mpt") p.tif <- argSplit[[1]][2]
- 			if(argSplit[[1]][1]=="mbt")  b.tif <- argSplit[[1]][2]
- 			if(argSplit[[1]][1]=="c") new.tiffs <- argSplit[[1]][2]   #mds file header
- 			if(argSplit[[1]][1]=="pmt")  produce.metrics <- argSplit[[1]][2]
+ 		if(argSplit[[1]][1]=="mbt")  b.tif <- argSplit[[1]][2]
+ 		if(argSplit[[1]][1]=="c") new.tiffs <- argSplit[[1]][2]   #mds file header
+ 		if(argSplit[[1]][1]=="pmt")  produce.metrics <- argSplit[[1]][2]
+	  if(argSplit[[1]][1]=="--multicore")  multCore <- as.logical(argSplit[[1]][2])
     }
 
 ScrptPath<-dirname(ScriptPath)
